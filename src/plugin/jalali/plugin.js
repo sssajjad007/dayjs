@@ -1,18 +1,17 @@
-import fa from 'dayjs/esm/locale/fa'
-
+import fa from '../../locale/fa'
 import jdate from './calendar'
 import * as C from './constant'
 
 export default (o, Dayjs, dayjs) => {
   const proto = Dayjs.prototype
   const U = proto.$utils()
-  const $isJalali = (v) => v.$C === 'jalali'
+  const $isJalali = v => v.$C === 'jalali'
   const $prettyUnit = U.prettyUnit || U.p
   const $isUndefined = U.isUndefined || U.u
   const $padStart = U.padStart || U.s
   const $monthDiff = U.monthDiff || U.m
   const $absFloor = U.absFloor || U.a
-  const wrapperOfTruth = (action) => function (...args) {
+  const wrapperOfTruth = action => function (...args) {
     const unsure = action.bind(this)(...args)
     unsure.$C = this.$C
     if (unsure.isJalali()) {
@@ -136,6 +135,55 @@ export default (o, Dayjs, dayjs) => {
       default:
         return oldStartOf.bind(this)(units, startOf)
     }
+  }
+
+  proto.isValid = function () {
+    return !(this.$d.toString() === C.INVALID_DATE_STRING)
+  }
+
+  proto.isSame = function (that, units) {
+    const other = dayjs(that)
+    return this.startOf(units) <= other && other <= this.endOf(units)
+  }
+
+  proto.isAfter = function (that, units) {
+    return dayjs(that) < this.startOf(units)
+  }
+
+  proto.isBefore = function (that, units) {
+    return this.endOf(units) < dayjs(that)
+  }
+
+  proto.unix = function () {
+    return Math.floor(this.valueOf() / 1000)
+  }
+
+  proto.valueOf = function () {
+    return this.$d.getTime()
+  }
+
+  proto.get = function (unit) {
+    return this[U.p(unit)]()
+  }
+
+  proto.subtract = function (number, string) {
+    return this.add(number * -1, string)
+  }
+
+  proto.toDate = function () {
+    return new Date(this.valueOf())
+  }
+
+  proto.toJSON = function () {
+    return this.isValid() ? this.toISOString() : null
+  }
+
+  proto.toISOString = function () {
+    return this.$d.toISOString()
+  }
+
+  proto.toString = function () {
+    return this.$d.toUTCString()
   }
 
   proto.$set = function (units, int) {
